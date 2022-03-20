@@ -3,15 +3,15 @@ import { useQuery } from '@apollo/client'
 import { ALL_AUTHORS } from '../queries'
 import UpdateBirth from './UpdateBirth'
 
-const Authors = (props) => {
+const Authors = ({ show, token }) => {
   const { loading, data } = useQuery(ALL_AUTHORS)
 
-  if (!props.show) {
+  if (!show) {
     return null
   }
 
   if (loading) {
-    return <div>loading...</div>
+    return <div>Loading...</div>
   }
 
   return (
@@ -33,7 +33,7 @@ const Authors = (props) => {
           ))}
         </tbody>
       </table>
-      <UpdateBirth Authors={data.allAuthors} />
+      {token === null ? null : <UpdateBirth Authors={data.allAuthors} />}
     </div>
   )
 }

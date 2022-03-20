@@ -13,7 +13,6 @@ const UpdateBirth = ({ Authors }) => {
   const submit = (e) => {
     e.preventDefault()
 
-    console.log(name)
     updateBorn({ variables: { name, born } })
 
     setName('')

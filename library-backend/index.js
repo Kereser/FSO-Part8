@@ -93,8 +93,6 @@ const resolvers = {
       return await Book.find({ genres: { $in: [args.genre] } }).populate(
         'author',
       )
-
-      //? Solo tengo arreglada la parte de allBooks. De resto falta todo del 8.13
     },
     allAuthors: async () => await Author.find({}),
     me: async (root, args, { currentUser }) => {
@@ -112,6 +110,7 @@ const resolvers = {
         throw new AuthenticationError('Not authenticated')
       }
 
+      console.log('Entro a anadir')
       const bookAtDb = await Book.findOne({ title: args.title })
       const author = await Author.findOne({ name: args.author })
 
@@ -128,10 +127,12 @@ const resolvers = {
         try {
           await newAuthor.save()
         } catch (error) {
+          console.log('Falla guardada de author')
           throw new UserInputError(error.message, {
-            invalidArgs: args.author,
+            invalidArgs: args,
           })
         }
+        console.log('Guardo bien el autor')
         const bookToDB = new Book({
           title: args.title,
           published: args.published,
@@ -141,7 +142,9 @@ const resolvers = {
         try {
           await bookToDB.save()
         } catch (error) {
-          throw new UserInputError(error.message, { invalidArgs: args.title })
+          console.log('Falla guardada de libro')
+          await Author.deleteOne({ _id: newAuthor._id })
+          throw new UserInputError(error.message, { invalidArgs: args })
         }
         return await bookToDB.populate('author')
       }
@@ -155,6 +158,7 @@ const resolvers = {
       try {
         await bookToDB.save()
       } catch (error) {
+        await Author.deleteOne({ _id: author._id })
         throw new UserInputError(error.message, { invalidArgs: args })
       }
       return await bookToDB.populate('author')
