@@ -78,7 +78,7 @@ const resolvers = {
     authorCount: async () => await Author.find({}).then((res) => res.length),
     allBooks: async (root, args) => {
       const author = await Author.findById(args.author)
-      if (!args.author && !args.genre) {
+      if ((!args.author && !args.genre) || args.genre === 'all books') {
         return await Book.find({}).populate('author')
       }
       if (args.author && args.genre) {

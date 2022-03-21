@@ -1,42 +1,56 @@
 import { useQuery } from '@apollo/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { ALL_BOOKS } from '../queries'
+import { ALL_BOOKS, ALL_BOOKS_WITH_GENRE } from '../queries'
 
 const Books = (props) => {
-  const [filter, setFilter] = useState('all books')
-  const { loading, data } = useQuery(ALL_BOOKS)
+  const [genre, setGenre] = useState('all books')
+  const { loading: allBooksLoading, data: allBooksData } = useQuery(ALL_BOOKS)
+  const { loading: filterLoading, data: filterData } = useQuery(
+    ALL_BOOKS_WITH_GENRE,
+    {
+      variables: { genre },
+    },
+  )
+  const [genres, setGenres] = useState([])
+  const [booksToShow, setBooksToShow] = useState([])
+
+  useEffect(() => {
+    console.log('Entro al primer Effect')
+    if (filterData) {
+      setBooksToShow(filterData.allBooks)
+    }
+  }, [filterData])
+
+  useEffect(() => {
+    console.log('Entro al segundo effect')
+    if (allBooksData) {
+      let placeGenre = allBooksData.allBooks.map((book) => {
+        return book.genres
+      })
+      placeGenre = [...new Set(placeGenre.flat())]
+      placeGenre.push('all books')
+      setGenres(placeGenre)
+    }
+  }, [allBooksData])
 
   if (!props.show) {
     return null
   }
 
-  if (loading) {
-    return <div>Loading...</div>
+  if (filterLoading) {
+    return <div>Loading filteres books...</div>
   }
 
-  let genres = data.allBooks.map((book) => {
-    return book.genres
-  })
-
-  genres = [...new Set(genres.flat())]
-  genres.push('all books')
-
-  let booksToShow = []
-
-  if (filter === 'all books') {
-    booksToShow = data.allBooks
-  } else {
-    booksToShow = data.allBooks.filter((book) => {
-      return book.genres.includes(filter) ? book : null
-    })
+  if (allBooksLoading) {
+    return <div>Loading all books</div>
   }
 
   return (
     <div>
       <h2>books</h2>
 
-      <h3>in genre {filter}</h3>
+      <h3>in genre {genre}</h3>
 
       <table>
         <tbody>
@@ -54,10 +68,10 @@ const Books = (props) => {
           ))}
         </tbody>
       </table>
-      {genres.map((genre) => {
+      {genres.map((genreArr) => {
         return (
-          <button key={genre} onClick={() => setFilter(genre)}>
-            {genre}
+          <button key={genreArr} onClick={() => setGenre(genreArr)}>
+            {genreArr}
           </button>
         )
       })}
