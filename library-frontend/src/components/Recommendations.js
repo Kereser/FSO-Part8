@@ -13,8 +13,11 @@ const Recommendations = ({ show }) => {
   )
 
   useEffect(() => {
+    console.log(meData)
     if (meData) {
-      setFavoriteGenre(meData.me.favoriteGenre)
+      if (meData.me) {
+        setFavoriteGenre(meData.me.favoriteGenre)
+      }
     }
   }, [meData])
 

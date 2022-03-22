@@ -15,15 +15,14 @@ const Books = (props) => {
   const [genres, setGenres] = useState([])
   const [booksToShow, setBooksToShow] = useState([])
 
+  //? No me sale pq filterData se llama con una query distinta a allbooks. Consigue todos los libros, pero es una query distinta. Asi que hay que actualizar la query del filterData
   useEffect(() => {
-    console.log('Entro al primer Effect')
     if (filterData) {
       setBooksToShow(filterData.allBooks)
     }
   }, [filterData])
 
   useEffect(() => {
-    console.log('Entro al segundo effect')
     if (allBooksData) {
       let placeGenre = allBooksData.allBooks.map((book) => {
         return book.genres
@@ -38,12 +37,8 @@ const Books = (props) => {
     return null
   }
 
-  if (filterLoading) {
+  if (filterLoading || allBooksLoading) {
     return <div>Loading filteres books...</div>
-  }
-
-  if (allBooksLoading) {
-    return <div>Loading all books</div>
   }
 
   return (
