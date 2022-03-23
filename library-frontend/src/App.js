@@ -6,7 +6,38 @@ import Books from './components/Books'
 import LoginForm from './components/LoginForm'
 import NewBook from './components/NewBook'
 import Recommendations from './components/Recommendations'
-import { BOOK_ADDED } from './queries'
+import { BOOK_ADDED, ALL_BOOKS, ALL_AUTHORS, AUTHOR_ADDED } from './queries'
+
+export const updateBookCache = (cache, query, bookAdded) => {
+  const uniqBeTitle = (a) => {
+    let uniqSet = new Set()
+    return a.filter((book) => {
+      return uniqSet.has(book) ? false : uniqSet.add(book)
+    })
+  }
+
+  cache.updateQuery(query, ({ allBooks }) => {
+    return {
+      allBooks: uniqBeTitle(allBooks.concat(bookAdded)),
+    }
+  })
+}
+
+export const updateAuthorCache = (cache, query, author) => {
+  cache.updateQuery(query, ({ allAuthors }) => {
+    if (!allAuthors.find((auth) => auth.name === author.name)) {
+      return {
+        allAuthors: allAuthors.concat(author),
+      }
+    }
+    const newAuthor = author
+    return {
+      allAuthors: allAuthors.map((auth) => {
+        return auth.name === newAuthor.name ? newAuthor : auth
+      }),
+    }
+  })
+}
 
 const App = () => {
   const [page, setPage] = useState('authors')
@@ -21,7 +52,18 @@ const App = () => {
   }
 
   useSubscription(BOOK_ADDED, {
-    onSubscriptionData: ({ subscriptionData }) => {
+    onSubscriptionData: async ({ subscriptionData }) => {
+      const newBook = await subscriptionData.data.bookAdded
+      alert(`${newBook.title} added`)
+      updateBookCache(client.cache, { query: ALL_BOOKS }, newBook)
+      console.log(subscriptionData)
+    },
+  })
+
+  useSubscription(AUTHOR_ADDED, {
+    onSubscriptionData: async ({ subscriptionData }) => {
+      const newAuthor = await subscriptionData.data.authorAdded
+      updateAuthorCache(client.cache, { query: ALL_AUTHORS }, newAuthor)
       console.log(subscriptionData)
     },
   })

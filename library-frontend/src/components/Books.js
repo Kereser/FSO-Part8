@@ -1,17 +1,13 @@
-import { useQuery } from '@apollo/client'
+import { useQuery, useLazyQuery } from '@apollo/client'
 import { useEffect, useState } from 'react'
 
 import { ALL_BOOKS, ALL_BOOKS_WITH_GENRE } from '../queries'
 
-const Books = (props) => {
+const Books = ({ show }) => {
   const [genre, setGenre] = useState('all books')
   const { loading: allBooksLoading, data: allBooksData } = useQuery(ALL_BOOKS)
-  const { loading: filterLoading, data: filterData } = useQuery(
-    ALL_BOOKS_WITH_GENRE,
-    {
-      variables: { genre },
-    },
-  )
+  const [loadFilter, { data: filterData, called, loading }] =
+    useLazyQuery(ALL_BOOKS_WITH_GENRE)
   const [genres, setGenres] = useState([])
   const [booksToShow, setBooksToShow] = useState([])
 
@@ -21,6 +17,14 @@ const Books = (props) => {
       setBooksToShow(filterData.allBooks)
     }
   }, [filterData])
+
+  useEffect(() => {
+    if (genre === 'all books') {
+      if (allBooksData) {
+        setBooksToShow(allBooksData.allBooks)
+      }
+    }
+  }, [allBooksData, genre])
 
   useEffect(() => {
     if (allBooksData) {
@@ -33,20 +37,27 @@ const Books = (props) => {
     }
   }, [allBooksData])
 
-  if (!props.show) {
+  if (!show) {
     return null
   }
 
-  if (filterLoading || allBooksLoading) {
-    return <div>Loading filteres books...</div>
+  if ((called && loading) || allBooksLoading) {
+    return <div>Loading books...</div>
+  }
+
+  const handleFilter = (genreArr) => {
+    return () => {
+      setGenre(genreArr)
+      if (genreArr !== 'all books') {
+        loadFilter({ variables: { genre: genreArr } })
+      }
+    }
   }
 
   return (
     <div>
       <h2>books</h2>
-
       <h3>in genre {genre}</h3>
-
       <table>
         <tbody>
           <tr>
@@ -65,7 +76,7 @@ const Books = (props) => {
       </table>
       {genres.map((genreArr) => {
         return (
-          <button key={genreArr} onClick={() => setGenre(genreArr)}>
+          <button key={genreArr} onClick={handleFilter(genreArr)}>
             {genreArr}
           </button>
         )
