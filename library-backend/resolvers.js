@@ -19,7 +19,7 @@ const resolvers = {
     allBooks: async (root, args) => {
       console.log('Entro a todos los libros.', args)
       const author = await Author.findById(args.author)
-      if ((!args.author && !args.genre) || args.genre === 'all books') {
+      if (!args.author && !args.genre) {
         return await Book.find({}).populate('author')
       }
       if (args.author && args.genre) {
@@ -85,6 +85,7 @@ const resolvers = {
           await Author.deleteOne({ _id: newAuthor._id })
           throw new UserInputError(error.message, { invalidArgs: args })
         }
+        pubsub.publish('AUTHOR_ADDED', { authorAdded: newAuthor })
         pubsub.publish('BOOK_ADDED', {
           bookAdded: await bookToDB.populate('author'),
         })
@@ -167,6 +168,9 @@ const resolvers = {
   Subscription: {
     bookAdded: {
       subscribe: () => pubsub.asyncIterator(['BOOK_ADDED']),
+    },
+    authorAdded: {
+      subscribe: () => pubsub.asyncIterator(['AUTHOR_ADDED']),
     },
   },
 }
