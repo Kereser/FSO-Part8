@@ -40,12 +40,6 @@ const resolvers = {
       return currentUser
     },
   },
-  Author: {
-    bookCount: async (root, args) => {
-      console.log('Entro pa buscar los libros', root)
-      return await Book.find({ author: root._id }).then((res) => res.length)
-    },
-  },
   Mutation: {
     addBook: async (root, args, { currentUser }) => {
       if (!currentUser) {
@@ -64,6 +58,7 @@ const resolvers = {
       if (!author) {
         const newAuthor = new Author({
           name: args.author,
+          bookCount: 1,
         })
         try {
           await newAuthor.save()
@@ -93,13 +88,16 @@ const resolvers = {
         return await bookToDB.populate('author')
       }
 
+      author.bookCount = author.bookCount + 1
       const bookToDB = new Book({
         title: args.title,
         published: args.published,
         author: author._id,
         genres: args.genres,
       })
+
       try {
+        await author.save()
         await bookToDB.save()
       } catch (error) {
         await Author.deleteOne({ _id: author._id })
